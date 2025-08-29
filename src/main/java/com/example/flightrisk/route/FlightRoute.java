@@ -1,4 +1,4 @@
-package com.example.flightrisk;
+package com.example.flightrisk.route;
 
 import java.util.List;
 
