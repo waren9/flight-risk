@@ -1,31 +1,25 @@
 package com.example.flightrisk;
 
+import java.util.List;
+
 public class FlightRoute {
-    private String from;
-    private String to;
+    private List<Waypoint> waypoints;
 
-    // Constructors
-    public FlightRoute() {}
+    public List<Waypoint> getWaypoints() { return waypoints; }
+    public void setWaypoints(List<Waypoint> waypoints) { this.waypoints = waypoints; }
 
-    public FlightRoute(String from, String to) {
-        this.from = from;
-        this.to = to;
-    }
+    public static class Waypoint {
+        private double lat;
+        private double lon;
+        private double alt;
 
-    // Getters and Setters
-    public String getFrom() {
-        return from;
-    }
+        public double getLat() { return lat; }
+        public void setLat(double lat) { this.lat = lat; }
 
-    public void setFrom(String from) {
-        this.from = from;
-    }
+        public double getLon() { return lon; }
+        public void setLon(double lon) { this.lon = lon; }
 
-    public String getTo() {
-        return to;
-    }
-
-    public void setTo(String to) {
-        this.to = to;
+        public double getAlt() { return alt; }
+        public void setAlt(double alt) { this.alt = alt; }
     }
 }

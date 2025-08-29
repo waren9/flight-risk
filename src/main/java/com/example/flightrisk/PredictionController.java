@@ -2,32 +2,31 @@ package com.example.flightrisk;
 
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-
 @RestController
-@RequestMapping("/predict")
+@RequestMapping("/api")
 public class PredictionController {
 
-    @PostMapping
-    public Map<String, Object> predictRisk(@RequestBody FlightRoute route) {
-        Random random = new Random();
-
-        // Fake probabilities for now
-        double turbulenceProbability = random.nextDouble();  // 0.0 - 1.0
-        double birdStrikeProbability = random.nextDouble();
-
-        // Suggest alternate route (just reverse as demo)
-        String alternateRoute = route.getTo() + " → " + route.getFrom();
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("from", route.getFrom());
-        result.put("to", route.getTo());
-        result.put("turbulenceProbability", turbulenceProbability);
-        result.put("birdStrikeProbability", birdStrikeProbability);
-        result.put("suggestedAlternate", alternateRoute);
-
-        return result;
+    @PostMapping("/predict")
+    public PredictionResult predict(@RequestBody FlightRoute route) {
+        // For now, return dummy values
+        return new PredictionResult(0.25, 0.10, "Try altitude +2000 ft");
     }
+}
+
+// Response class
+class PredictionResult {
+    private double turbulenceProbability;
+    private double birdstrikeProbability;
+    private String suggestion;
+
+    public PredictionResult(double turbulenceProbability, double birdstrikeProbability, String suggestion) {
+        this.turbulenceProbability = turbulenceProbability;
+        this.birdstrikeProbability = birdstrikeProbability;
+        this.suggestion = suggestion;
+    }
+
+    // getters (needed for JSON serialization)
+    public double getTurbulenceProbability() { return turbulenceProbability; }
+    public double getBirdstrikeProbability() { return birdstrikeProbability; }
+    public String getSuggestion() { return suggestion; }
 }
