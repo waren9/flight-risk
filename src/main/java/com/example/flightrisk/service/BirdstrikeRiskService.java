@@ -1,48 +1,70 @@
 package com.example.flightrisk.service;
 
 import jakarta.annotation.PostConstruct;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.example.flightrisk.dto.PredictionResponse;
 
 @Service
 public class BirdstrikeRiskService {
 
-    private final Map<String, Integer> birdstrikeCounts = new HashMap<>();
+    // Store both altitude & count for each airport
+    private final Map<String, AirportData> birdstrikeData = new HashMap<>();
 
-    @PostConstruct
-    public void loadDummyData() {
-        birdstrikeCounts.put("DEL", 1200);
-        birdstrikeCounts.put("BOM", 800);
-        birdstrikeCounts.put("BLR", 350);
-        birdstrikeCounts.put("HYD", 200);
-        birdstrikeCounts.put("CCU", 100);
+    static class AirportData {
+        int altitude;
+        int count;
+        AirportData(int altitude, int count) {
+            this.altitude = altitude;
+            this.count = count;
+        }
     }
 
-    public PredictionResponse assessRisk(String airportCode, int altitude) {
-        int count = birdstrikeCounts.getOrDefault(airportCode, 0);
-        String risk;
+    @PostConstruct
+    public void loadBirdstrikeData() {
+        try {
+            var resource = new ClassPathResource("data/birdstrikes.csv");
+
+            try (BufferedReader br = new BufferedReader(
+                    new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8))) {
+
+                String line;
+                br.readLine(); // skip header
+
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(",");
+                    if (parts.length == 5) {
+                        String airportCode = parts[0].trim(); // define inside the loop
+                        int altitude = Integer.parseInt(parts[3].trim());
+                        int count = Integer.parseInt(parts[4].trim());
+                        birdstrikeData.put(airportCode, new AirportData(altitude, count));
+                    }
+                }
+            }
+            System.out.println("Birdstrike data loaded successfully!");
+        } catch (Exception e) {
+            System.err.println("Error loading birdstrike data: " + e.getMessage());
+        }
+    }
+
+    public String assessRisk(String airportCode) {
+        AirportData data = birdstrikeData.get(airportCode.trim());
+        if (data == null) return "No data available";
+
+        int altitude = data.altitude;
+        int count = data.count;
 
         if (altitude < 3000 && count > 500) {
-            risk = "High Risk";
+            return "High Risk";
         } else if (altitude < 3000 && count > 200) {
-            risk = "Medium Risk";
+            return "Medium Risk";
         } else {
-            risk = "Low Risk";
+            return "Low Risk";
         }
-
-        String suggestedAlternate = null;
-        if ("High Risk".equals(risk)) {
-            suggestedAlternate = birdstrikeCounts.entrySet().stream()
-                    .filter(entry -> !entry.getKey().equals(airportCode))
-                    .min(Map.Entry.comparingByValue()) // lowest strike count
-                    .map(Map.Entry::getKey)
-                    .orElse("NONE");
-        }
-
-        return new PredictionResponse(airportCode, altitude, risk, suggestedAlternate);
     }
 }

@@ -2,30 +2,16 @@ package com.example.flightrisk.dto;
 
 public class PredictionResponse {
     private String airport;
-    private int altitude;
     private String riskLevel;
-    private String suggestedAlternate;
+    private String weather;
 
-    public PredictionResponse(String airport, int altitude, String riskLevel, String suggestedAlternate) {
+    public PredictionResponse(String airport, String riskLevel, String weather) {
         this.airport = airport;
-        this.altitude = altitude;
         this.riskLevel = riskLevel;
-        this.suggestedAlternate = suggestedAlternate;
+        this.weather = weather;
     }
 
-    public String getAirport() {
-        return airport;
-    }
-
-    public int getAltitude() {
-        return altitude;
-    }
-
-    public String getRiskLevel() {
-        return riskLevel;
-    }
-
-    public String getSuggestedAlternate() {
-        return suggestedAlternate;
-    }
+    public String getAirport() { return airport; }
+    public String getRiskLevel() { return riskLevel; }
+    public String getWeather() { return weather; }
 }
