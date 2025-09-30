@@ -1,6 +1,6 @@
 package com.example.flightrisk.service;
 
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
@@ -53,11 +53,20 @@ public class BirdstrikeRiskService {
     }
 
     public String assessRisk(String airportCode) {
-        AirportData data = birdstrikeData.get(airportCode.trim());
-        if (data == null) return "No data available";
+        if (airportCode == null || airportCode.trim().isEmpty()) {
+            return "Invalid airport code";
+        }
+        
+        AirportData data = birdstrikeData.get(airportCode.trim().toUpperCase());
+        if (data == null) {
+            System.out.println("No birdstrike data found for airport: " + airportCode);
+            return "No data available";
+        }
 
         int altitude = data.altitude;
         int count = data.count;
+
+        System.out.println("Assessing risk for " + airportCode + ": Altitude=" + altitude + ", Count=" + count);
 
         if (altitude < 3000 && count > 500) {
             return "High Risk";
@@ -66,5 +75,13 @@ public class BirdstrikeRiskService {
         } else {
             return "Low Risk";
         }
+    }
+
+    public Map<String, AirportData> getBirdstrikeData() {
+        return new HashMap<>(birdstrikeData);
+    }
+
+    public boolean hasDataForAirport(String airportCode) {
+        return airportCode != null && birdstrikeData.containsKey(airportCode.trim().toUpperCase());
     }
 }

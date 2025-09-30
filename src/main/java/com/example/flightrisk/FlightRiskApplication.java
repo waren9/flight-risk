@@ -7,7 +7,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class FlightRiskApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(FlightRiskApplication.class, args);
+		// Check if JavaFX is requested
+		if (args.length > 0 && args[0].equals("--javafx")) {
+			// Launch JavaFX application
+			com.example.flightrisk.fx.FlightRiskFXApplication.main(args);
+		} else {
+			// Launch web application
+			SpringApplication.run(FlightRiskApplication.class, args);
+		}
 	}
 
 }
