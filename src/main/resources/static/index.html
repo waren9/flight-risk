@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Risk Assessment System v2.0</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .status {
+            background: rgba(46, 204, 113, 0.2);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: inline-block;
+        }
+        
+        .api-links {
+            margin-top: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .api-link {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+            display: block;
+        }
+        
+        .api-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .api-link h3 {
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+        
+        .api-link p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .react-info {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.2);
+            border: 1px solid rgba(52, 152, 219, 0.5);
+            border-radius: 10px;
+        }
+        
+        .react-info h3 {
+            margin-bottom: 10px;
+            color: #3498db;
+        }
+        
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">✈️</div>
+        <h1>Flight Risk Assessment System</h1>
+        <p class="subtitle">Modern React + Spring Boot Architecture v2.0</p>
+        
+        <div class="status">
+            <strong>🟢 Backend API Server Running</strong><br>
+            Ready to serve flight risk assessment requests
+        </div>
+        
+        <div class="api-links">
+            <a href="/api/health" class="api-link">
+                <h3>🔧 Health Check</h3>
+                <p>System status and diagnostics</p>
+            </a>
+            
+            <a href="/api/airports" class="api-link">
+                <h3>🛫 Airports</h3>
+                <p>Available airports for assessment</p>
+            </a>
+            
+            <a href="/api/predictions" class="api-link">
+                <h3>📊 Predictions</h3>
+                <p>Historical risk predictions</p>
+            </a>
+            
+            <a href="/api/statistics" class="api-link">
+                <h3>📈 Statistics</h3>
+                <p>System usage statistics</p>
+            </a>
+        </div>
+        
+        <div class="react-info">
+            <h3>🚀 Ready for React Frontend</h3>
+            <p>The backend API is ready! To run the React frontend:</p>
+            <div class="code">
+                cd frontend<br>
+                npm install<br>
+                npm start
+            </div>
+            <p>Or use the automated script: <code>./run-react-app.sh</code></p>
+        </div>
+        
+        <div style="margin-top: 30px; opacity: 0.7; font-size: 0.9rem;">
+            <p>🌐 Backend API: <strong>http://localhost:8080/api</strong></p>
+            <p>📱 React Frontend: <strong>http://localhost:3000</strong> (when running)</p>
+        </div>
+    </div>
+</body>
+</html>

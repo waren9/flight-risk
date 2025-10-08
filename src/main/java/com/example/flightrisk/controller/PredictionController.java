@@ -5,49 +5,176 @@ import com.example.flightrisk.entity.FlightPrediction;
 import com.example.flightrisk.repository.FlightPredictionRepository;
 import com.example.flightrisk.service.BirdstrikeRiskService;
 import com.example.flightrisk.service.WeatherService;
+import com.example.flightrisk.service.RiskCalculatorService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/predict")
+@RequestMapping("/api")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class PredictionController {
 
-    private final BirdstrikeRiskService birdstrikeRiskService;
-    private final WeatherService weatherService;
-    private final FlightPredictionRepository flightPredictionRepository;
+    private static final Logger logger = LoggerFactory.getLogger(PredictionController.class);
 
-    public PredictionController(BirdstrikeRiskService birdstrikeRiskService, 
-                              WeatherService weatherService,
-                              FlightPredictionRepository flightPredictionRepository) {
-        this.birdstrikeRiskService = birdstrikeRiskService;
-        this.weatherService = weatherService;
-        this.flightPredictionRepository = flightPredictionRepository;
-    }
+    @Autowired
+    private BirdstrikeRiskService birdstrikeRiskService;
 
-    @GetMapping
-    public PredictionResponse predictRisk(@RequestParam String airport) {
-        if (airport == null || airport.trim().isEmpty()) {
-            throw new IllegalArgumentException("Airport code cannot be null or empty");
-        }
-        
+    @Autowired
+    private WeatherService weatherService;
+
+    @Autowired
+    private RiskCalculatorService riskCalculatorService;
+
+    @Autowired
+    private FlightPredictionRepository flightPredictionRepository;
+
+    @PostMapping("/predict/{airport}")
+    public ResponseEntity<Map<String, Object>> predictRisk(@PathVariable String airport) {
         try {
-            String riskLevel = birdstrikeRiskService.assessRisk(airport);
+            logger.info("Predicting risk for airport: {}", airport);
+            
+            // Get risk assessments
+            String birdstrikeRisk = birdstrikeRiskService.assessRisk(airport);
             String weatherInfo = weatherService.getWeather(airport);
-
-            // Calculate risk score based on risk level
-            double riskScore = calculateRiskScore(riskLevel);
-
+            String weatherRisk = weatherService.getWeatherRisk(airport);
+            
+            // Get comprehensive risk breakdown
+            Map<String, Object> riskBreakdown = riskCalculatorService.getRiskBreakdown(airport, birdstrikeRisk, weatherRisk);
+            
+            // Calculate final risk score
+            double riskScore = riskCalculatorService.calculateRiskScore(airport, birdstrikeRisk, weatherRisk);
+            String finalRisk = riskCalculatorService.calculateFinalRisk(airport, birdstrikeRisk, weatherRisk);
+            
             // Save prediction to database
-            FlightPrediction prediction = new FlightPrediction(airport.toUpperCase(), riskLevel, weatherInfo, "N/A", riskScore);
+            FlightPrediction prediction = new FlightPrediction(airport, finalRisk, weatherInfo, "N/A", riskScore);
             flightPredictionRepository.save(prediction);
-
-            return new PredictionResponse(airport.toUpperCase(), riskLevel, weatherInfo);
+            
+            // Build response
+            Map<String, Object> response = new HashMap<>();
+            response.put("airport", airport);
+            response.put("riskLevel", finalRisk);
+            response.put("riskScore", riskScore);
+            response.put("weather", weatherInfo);
+            response.put("breakdown", riskBreakdown);
+            response.put("timestamp", LocalDateTime.now().toString());
+            
+            logger.info("Risk prediction completed for {}: {}", airport, finalRisk);
+            return ResponseEntity.ok(response);
+            
         } catch (Exception e) {
-            throw new RuntimeException("Failed to predict risk for airport " + airport + ": " + e.getMessage(), e);
+            logger.error("Failed to assess risk for airport {}: {}", airport, e.getMessage());
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to assess risk: " + e.getMessage());
+            errorResponse.put("airport", airport);
+            errorResponse.put("timestamp", LocalDateTime.now().toString());
+            return ResponseEntity.badRequest().body(errorResponse);
         }
     }
 
+    @GetMapping("/predictions")
+    public ResponseEntity<List<FlightPrediction>> getPredictions() {
+        try {
+            List<FlightPrediction> predictions = flightPredictionRepository.findAll();
+            logger.info("Retrieved {} predictions", predictions.size());
+            return ResponseEntity.ok(predictions);
+        } catch (Exception e) {
+            logger.error("Failed to retrieve predictions: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @DeleteMapping("/predictions")
+    public ResponseEntity<Map<String, String>> clearPredictions() {
+        try {
+            flightPredictionRepository.deleteAll();
+            logger.info("Cleared all predictions");
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "All predictions cleared successfully");
+            response.put("timestamp", LocalDateTime.now().toString());
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Failed to clear predictions: {}", e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to clear predictions: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    @DeleteMapping("/predictions/{id}")
+    public ResponseEntity<Map<String, String>> deletePrediction(@PathVariable Long id) {
+        try {
+            if (flightPredictionRepository.findById(id) != null) {
+                flightPredictionRepository.deleteById(id);
+                logger.info("Deleted prediction with id: {}", id);
+                
+                Map<String, String> response = new HashMap<>();
+                response.put("message", "Prediction deleted successfully");
+                response.put("id", id.toString());
+                return ResponseEntity.ok(response);
+            } else {
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("error", "Prediction not found");
+                errorResponse.put("id", id.toString());
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            logger.error("Failed to delete prediction {}: {}", id, e.getMessage());
+            Map<String, String> errorResponse = new HashMap<>();
+            errorResponse.put("error", "Failed to delete prediction: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(errorResponse);
+        }
+    }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<Map<String, Object>> getStatistics() {
+        try {
+            List<FlightPrediction> predictions = flightPredictionRepository.findAll();
+            
+            long total = predictions.size();
+            long highRisk = predictions.stream()
+                .filter(p -> p.getRiskLevel().toLowerCase().contains("high"))
+                .count();
+            long mediumRisk = predictions.stream()
+                .filter(p -> p.getRiskLevel().toLowerCase().contains("medium"))
+                .count();
+            long lowRisk = predictions.stream()
+                .filter(p -> p.getRiskLevel().toLowerCase().contains("low"))
+                .count();
+            
+            Map<String, Object> statistics = new HashMap<>();
+            statistics.put("total", total);
+            statistics.put("highRisk", highRisk);
+            statistics.put("mediumRisk", mediumRisk);
+            statistics.put("lowRisk", lowRisk);
+            statistics.put("timestamp", LocalDateTime.now().toString());
+            
+            return ResponseEntity.ok(statistics);
+        } catch (Exception e) {
+            logger.error("Failed to get statistics: {}", e.getMessage());
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, Object>> healthCheck() {
+        Map<String, Object> health = new HashMap<>();
+        health.put("status", "UP");
+        health.put("timestamp", LocalDateTime.now().toString());
+        health.put("version", "2.0.0");
+        health.put("service", "Flight Risk Assessment System");
+        return ResponseEntity.ok(health);
+    }
+
+    // Legacy endpoints for backward compatibility
     @GetMapping("/history")
     public List<FlightPrediction> getPredictionHistory() {
         return flightPredictionRepository.findAll();
@@ -56,11 +183,6 @@ public class PredictionController {
     @GetMapping("/history/{airport}")
     public List<FlightPrediction> getPredictionHistoryByAirport(@PathVariable String airport) {
         return flightPredictionRepository.findByAirport(airport);
-    }
-
-    @DeleteMapping("/history/{id}")
-    public void deletePrediction(@PathVariable Long id) {
-        flightPredictionRepository.deleteById(id);
     }
 
     private double calculateRiskScore(String riskLevel) {

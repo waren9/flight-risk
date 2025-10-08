@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/airports")
+@RequestMapping("/api/airports")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 public class AirportController {
 
     private final AirportRepository airportRepository;
