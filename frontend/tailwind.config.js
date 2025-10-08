@@ -17,6 +17,13 @@ module.exports = {
           500: '#764ba2',
           600: '#6b46c1',
         },
+        accent: {
+          50: '#f5f3ff',
+          100: '#ede9fe',
+          500: '#8b5cf6',
+          600: '#7c3aed',
+          700: '#6d28d9',
+        },
         success: {
           50: '#f0fff4',
           500: '#48bb78',
@@ -46,6 +53,10 @@ module.exports = {
         slideUp: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        gradientMove: {
+          '0%': { 'background-position': '0% 50%' },
+          '100%': { 'background-position': '100% 50%' }
         }
       }
     },

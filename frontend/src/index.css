@@ -56,7 +56,9 @@ code {
 }
 
 .gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #8b5cf6 100%);
+  background-size: 200% 200%;
+  animation: gradientMove 8s ease infinite alternate;
 }
 
 .gradient-success {
@@ -69,4 +71,9 @@ code {
 
 .gradient-danger {
   background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+}
+
+@keyframes gradientMove {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
 }

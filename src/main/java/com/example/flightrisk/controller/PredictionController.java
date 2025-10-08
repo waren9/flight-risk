@@ -1,6 +1,5 @@
 package com.example.flightrisk.controller;
 
-import com.example.flightrisk.dto.PredictionResponse;
 import com.example.flightrisk.entity.FlightPrediction;
 import com.example.flightrisk.repository.FlightPredictionRepository;
 import com.example.flightrisk.service.BirdstrikeRiskService;
@@ -37,14 +36,27 @@ public class PredictionController {
     private FlightPredictionRepository flightPredictionRepository;
 
     @PostMapping("/predict/{airport}")
-    public ResponseEntity<Map<String, Object>> predictRisk(@PathVariable String airport) {
+    public ResponseEntity<Map<String, Object>> predictRisk(
+            @PathVariable String airport,
+            @RequestParam(required = false) String targetTime) {
         try {
-            logger.info("Predicting risk for airport: {}", airport);
+            LocalDateTime predictionTime = targetTime != null ? 
+                LocalDateTime.parse(targetTime) : LocalDateTime.now();
+            
+            logger.info("Predicting risk for airport: {} at time: {}", airport, predictionTime);
             
             // Get risk assessments
             String birdstrikeRisk = birdstrikeRiskService.assessRisk(airport);
             String weatherInfo = weatherService.getWeather(airport);
             String weatherRisk = weatherService.getWeatherRisk(airport);
+            
+            // Simulate time travel effects on weather and risk
+            if (targetTime != null) {
+                weatherInfo = simulateWeatherForTime(airport, predictionTime);
+                // Adjust risk based on time factors (season, time of day, etc.)
+                birdstrikeRisk = adjustRiskForTime(birdstrikeRisk, predictionTime);
+                weatherRisk = adjustWeatherRiskForTime(weatherRisk, predictionTime);
+            }
             
             // Get comprehensive risk breakdown
             Map<String, Object> riskBreakdown = riskCalculatorService.getRiskBreakdown(airport, birdstrikeRisk, weatherRisk);
@@ -64,9 +76,11 @@ public class PredictionController {
             response.put("riskScore", riskScore);
             response.put("weather", weatherInfo);
             response.put("breakdown", riskBreakdown);
-            response.put("timestamp", LocalDateTime.now().toString());
+            response.put("timestamp", predictionTime.toString());
+            response.put("isTimeTravel", targetTime != null);
+            response.put("predictionTime", predictionTime.toString());
             
-            logger.info("Risk prediction completed for {}: {}", airport, finalRisk);
+            logger.info("Risk prediction completed for {} at {}: {}", airport, predictionTime, finalRisk);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -76,6 +90,78 @@ public class PredictionController {
             errorResponse.put("airport", airport);
             errorResponse.put("timestamp", LocalDateTime.now().toString());
             return ResponseEntity.badRequest().body(errorResponse);
+        }
+    }
+
+    private String simulateWeatherForTime(String airport, LocalDateTime targetTime) {
+        // Simulate weather conditions based on target time
+        int month = targetTime.getMonthValue();
+        int hour = targetTime.getHour();
+        
+        String season = getSeason(month);
+        String timeOfDay = getTimeOfDay(hour);
+        
+        return String.format("Simulated weather for %s in %s during %s: %s conditions expected", 
+            airport, season, timeOfDay, getSeasonalWeather(season));
+    }
+    
+    private String adjustRiskForTime(String baseRisk, LocalDateTime targetTime) {
+        // Adjust birdstrike risk based on migration seasons and time
+        int month = targetTime.getMonthValue();
+        int hour = targetTime.getHour();
+        
+        // Spring and fall are high migration periods
+        if (month >= 3 && month <= 5 || month >= 9 && month <= 11) {
+            if (baseRisk.contains("Low")) return baseRisk.replace("Low", "Medium");
+            if (baseRisk.contains("Medium")) return baseRisk.replace("Medium", "High");
+        }
+        
+        // Dawn and dusk are high bird activity times
+        if (hour >= 5 && hour <= 8 || hour >= 17 && hour <= 20) {
+            if (baseRisk.contains("Low")) return baseRisk.replace("Low", "Medium");
+        }
+        
+        return baseRisk;
+    }
+    
+    private String adjustWeatherRiskForTime(String baseRisk, LocalDateTime targetTime) {
+        // Adjust weather risk based on seasonal patterns
+        int month = targetTime.getMonthValue();
+        
+        // Winter months typically have more severe weather
+        if (month >= 12 || month <= 2) {
+            if (baseRisk.contains("Low")) return baseRisk.replace("Low", "Medium");
+        }
+        
+        // Summer storm season
+        if (month >= 6 && month <= 8) {
+            if (baseRisk.contains("Low")) return baseRisk.replace("Low", "Medium");
+        }
+        
+        return baseRisk;
+    }
+    
+    private String getSeason(int month) {
+        if (month >= 3 && month <= 5) return "Spring";
+        if (month >= 6 && month <= 8) return "Summer";
+        if (month >= 9 && month <= 11) return "Fall";
+        return "Winter";
+    }
+    
+    private String getTimeOfDay(int hour) {
+        if (hour >= 5 && hour < 12) return "Morning";
+        if (hour >= 12 && hour < 17) return "Afternoon";
+        if (hour >= 17 && hour < 21) return "Evening";
+        return "Night";
+    }
+    
+    private String getSeasonalWeather(String season) {
+        switch (season) {
+            case "Spring": return "Mild with possible rain showers";
+            case "Summer": return "Warm with thunderstorm potential";
+            case "Fall": return "Cool with variable conditions";
+            case "Winter": return "Cold with possible snow/ice";
+            default: return "Variable conditions";
         }
     }
 

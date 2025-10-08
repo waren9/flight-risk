@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Flight Risk Assessment System - React App Launcher
 echo "🚀 Starting Flight Risk Assessment System v2.0"
@@ -19,8 +19,11 @@ fi
 echo "✅ Node.js version: $(node --version)"
 echo "✅ npm version: $(npm --version)"
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+FRONTEND_DIR="$ROOT_DIR/frontend"
+
 # Navigate to frontend directory
-cd frontend
+cd "$FRONTEND_DIR"
 
 # Check if node_modules exists
 if [ ! -d "node_modules" ]; then
@@ -34,28 +37,52 @@ else
     echo "✅ Dependencies already installed"
 fi
 
+# Ensure jest-worker is present for CRA compatibility on newer Node
+if [ ! -f "node_modules/jest-worker/build/index.js" ]; then
+    echo "🔧 Adding jest-worker for CRA compatibility..."
+    npm install --no-audit --no-fund --save-dev jest-worker@^27.5.1 --timeout=30000 || true
+fi
+
+# Run postinstall fix (shim) to ensure CRA can resolve jest-worker
+echo "🔧 Running postinstall fixes..."
+npm run postinstall --silent || echo "⚠️ Postinstall script not found, continuing..."
+
 # Check if port 8080 is already in use
 echo ""
 echo "🔧 Checking backend status..."
-if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null ; then
+if lsof -Pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
     echo "✅ Backend already running on port 8080"
     BACKEND_PID=""
 else
     echo "🚀 Starting Spring Boot backend..."
-    cd ..
-    ./mvnw spring-boot:run &
+    cd "$ROOT_DIR"
+    ./mvnw -q spring-boot:run &
     BACKEND_PID=$!
     
     # Wait for backend to start
     echo "⏳ Waiting for backend to initialize..."
-    sleep 10
+    for i in {1..60}; do
+      if curl -sSf http://localhost:8080/actuator/health >/dev/null 2>&1 || curl -sSf http://localhost:8080 >/dev/null 2>&1; then
+        echo "✅ Backend is up"
+        break
+      fi
+      sleep 1
+      if [ "$i" -eq 60 ]; then
+        echo "⚠️  Backend readiness timed out after 60s, continuing..."
+      fi
+    done
 fi
 
 # Start the React frontend
 echo ""
 echo "🎨 Starting React frontend..."
-cd frontend
-npm start &
+cd "$FRONTEND_DIR"
+# Preflight environment check and auto-fix common issues
+node ./scripts/check-setup.js || {
+  echo "❌ Environment check failed. Fix errors before continuing."
+  exit 1
+}
+npm start --silent &
 FRONTEND_PID=$!
 
 echo ""
