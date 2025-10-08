@@ -323,7 +323,103 @@ CREATE TABLE flight_predictions (
 );
 ```
 
-### Data Loading Strategy
+## ☕ **Java Implementation & Why It's Critical**
+
+### **Why Java for Flight Risk Assessment?**
+
+Java was chosen as the core backend technology for several critical reasons:
+
+| **Java Advantage** | **Flight Risk System Benefit** | **Implementation Impact** |
+|-------------------|--------------------------------|---------------------------|
+| **Enterprise Reliability** | Mission-critical aviation safety requires 99.9% uptime | Robust exception handling, memory management |
+| **Platform Independence** | Deploy on any OS (Linux, Windows, macOS) | "Write once, run anywhere" for diverse environments |
+| **Strong Type Safety** | Prevents runtime errors in risk calculations | Compile-time error detection for safety-critical code |
+| **Mature Ecosystem** | Extensive libraries for aviation, weather, database integration | Spring Boot, Hibernate, Jackson for rapid development |
+| **Scalability** | Handle thousands of concurrent risk assessments | JVM optimization, garbage collection, thread management |
+| **Security** | Aviation systems require strict security compliance | Built-in security features, encryption, authentication |
+
+### **Java Implementation Locations in the System**
+
+#### **1. Core Business Logic (Service Layer)**
+```java
+// Location: src/main/java/com/example/flightrisk/service/
+// Why Important: Critical risk calculation algorithms must be precise and reliable
+
+@Service
+public class RiskCalculatorService {
+    // Java's strong typing ensures calculation accuracy
+    private static final double BIRDSTRIKE_WEIGHT = 0.4;
+    private static final double WEATHER_WEIGHT = 0.35;
+    
+    public double calculateRiskScore(String airportCode, String birdstrikeRisk, String weatherRisk) {
+        // Java's exception handling prevents system crashes during critical calculations
+        try {
+            double totalScore = (convertRiskToScore(birdstrikeRisk) * BIRDSTRIKE_WEIGHT) +
+                               (convertRiskToScore(weatherRisk) * WEATHER_WEIGHT) +
+                               (calculateTrafficRisk(airportCode) * TRAFFIC_WEIGHT) +
+                               (calculateHistoricalRisk(airportCode) * HISTORICAL_WEIGHT);
+            
+            // Java's Math class provides precise floating-point operations
+            return Math.max(0.0, Math.min(1.0, totalScore));
+        } catch (Exception e) {
+            logger.error("Risk calculation failed: {}", e.getMessage());
+            return 0.5; // Safe fallback for aviation safety
+        }
+    }
+}
+```
+
+#### **2. REST API Controllers (Web Layer)**
+```java
+// Location: src/main/java/com/example/flightrisk/controller/
+// Why Important: Handle HTTP requests with proper validation and error handling
+
+@RestController
+@RequestMapping("/api")
+@CrossOrigin(origins = {"http://localhost:3000"})
+public class PredictionController {
+    
+    @PostMapping("/predict/{airport}")
+    public ResponseEntity<Map<String, Object>> predictRisk(
+            @PathVariable String airport,
+            @RequestParam(required = false) String targetTime) {
+        
+        // Java's annotation-based validation ensures data integrity
+        if (airport == null || airport.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(
+                Map.of("error", "Airport code is required for safety assessment")
+            );
+        }
+        
+        // Java's LocalDateTime provides precise time handling for aviation scheduling
+        LocalDateTime predictionTime = targetTime != null ? 
+            LocalDateTime.parse(targetTime) : LocalDateTime.now();
+            
+        // Implementation continues...
+    }
+}
+```
+
+#### **3. Data Access Layer (Repository Pattern)**
+```java
+// Location: src/main/java/com/example/flightrisk/repository/
+// Why Important: Secure, efficient database operations for aviation data
+
+@Repository
+public interface FlightPredictionRepository extends JpaRepository<FlightPrediction, Long> {
+    
+    // Java's type safety prevents SQL injection and data corruption
+    List<FlightPrediction> findByAirport(String airportCode);
+    
+    @Query("SELECT fp FROM FlightPrediction fp WHERE fp.riskScore >= :threshold")
+    List<FlightPrediction> findHighRiskPredictions(@Param("threshold") double threshold);
+    
+    // Java's Optional prevents null pointer exceptions in critical aviation data
+    Optional<FlightPrediction> findTopByAirportOrderByPredictionTimeDesc(String airport);
+}
+```
+
+### **Data Loading Strategy**
 
 ```java
 @Service
@@ -334,6 +430,369 @@ public class DatabaseInitializationService {
         loadAirportsFromCsv();
         loadBirdstrikeDataFromCsv();
     }
+    
+    /**
+     * Load 94 international airports from CSV using Java I/O
+     * Why Java: Robust file handling with proper exception management
+     */
+    private void loadAirportsFromCsv() {
+        try (BufferedReader br = new BufferedReader(
+                new InputStreamReader(
+                    new ClassPathResource("data/airports.csv").getInputStream(),
+                    StandardCharsets.UTF_8))) {
+            
+            String line;
+            br.readLine(); // Skip header
+            
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length == 7) {
+                    // Java's strong typing ensures data integrity
+                    Airport airport = new Airport(
+                        parts[0].trim(), // code
+                        parts[1].trim(), // name
+                        parts[2].trim(), // city
+                        parts[3].trim(), // country
+                        Double.parseDouble(parts[4].trim()), // latitude
+                        Double.parseDouble(parts[5].trim()), // longitude
+                        parts[6].trim()  // timezone
+                    );
+                    airportRepository.save(airport);
+                }
+            }
+            logger.info("Successfully loaded {} airports", airportRepository.count());
+        } catch (Exception e) {
+            logger.error("Failed to load airports from CSV: {}", e.getMessage());
+            loadFallbackAirports(); // Java's exception handling enables graceful fallback
+        }
+    }
+}
+```
+
+## 🗄️ **JDBC Implementation Deep Dive**
+
+### **What is JDBC and Why It's Essential for Aviation Systems**
+
+**JDBC (Java Database Connectivity)** is Java's standard API for database access. In our Flight Risk Assessment System, JDBC provides the critical foundation for:
+
+- **Data Persistence**: Storing flight predictions and airport information
+- **Transaction Management**: Ensuring data consistency in safety-critical operations
+- **Connection Pooling**: Efficient database resource management
+- **SQL Injection Prevention**: Parameterized queries for security
+
+### **JDBC Architecture in Flight Risk System**
+
+```mermaid
+graph TB
+    subgraph "Java Application Layer"
+        A[Spring Boot Application]
+        B[JPA/Hibernate ORM]
+        C[Repository Interfaces]
+    end
+    
+    subgraph "JDBC Layer"
+        D[JDBC Driver Manager]
+        E[Connection Pool - HikariCP]
+        F[PreparedStatements]
+    end
+    
+    subgraph "Database Layer"
+        G[H2 In-Memory Database]
+        H[SQL Tables]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+```
+
+### **JDBC Configuration in application.properties**
+
+```properties
+# JDBC Database Configuration
+spring.datasource.url=jdbc:h2:mem:flightrisk
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+
+# Connection Pool Configuration (HikariCP - Default in Spring Boot)
+spring.datasource.hikari.maximum-pool-size=20
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.idle-timeout=300000
+spring.datasource.hikari.connection-timeout=20000
+
+# JPA/Hibernate Configuration (Built on top of JDBC)
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.jpa.hibernate.ddl-auto=create-drop
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
+
+### **How JDBC Works in Our System**
+
+#### **1. Connection Management**
+```java
+// Spring Boot automatically configures JDBC connections
+// Location: Managed by Spring's DataSource configuration
+
+@Configuration
+public class DatabaseConfig {
+    
+    // Spring Boot creates this automatically based on application.properties
+    @Bean
+    @Primary
+    @ConfigurationProperties("spring.datasource")
+    public DataSource dataSource() {
+        // HikariCP connection pool (fastest JDBC connection pool)
+        return DataSourceBuilder.create()
+                .type(HikariDataSource.class)
+                .build();
+    }
+}
+```
+
+#### **2. Entity Mapping (JPA over JDBC)**
+```java
+// Location: src/main/java/com/example/flightrisk/entity/
+// Why Important: Type-safe database operations for aviation data
+
+@Entity
+@Table(name = "airports")
+public class Airport {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "code", unique = true, nullable = false, length = 10)
+    private String code; // IATA airport code
+    
+    @Column(name = "name", nullable = false)
+    private String name;
+    
+    @Column(name = "latitude", nullable = false)
+    private Double latitude;
+    
+    @Column(name = "longitude", nullable = false)
+    private Double longitude;
+    
+    // Behind the scenes: JPA generates JDBC PreparedStatements
+    // INSERT INTO airports (code, name, latitude, longitude) VALUES (?, ?, ?, ?)
+}
+
+@Entity
+@Table(name = "flight_predictions")
+public class FlightPrediction {
+    
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(name = "airport", nullable = false)
+    private String airport;
+    
+    @Column(name = "risk_level", nullable = false)
+    private String riskLevel;
+    
+    @Column(name = "risk_score", nullable = false)
+    private Double riskScore;
+    
+    @Column(name = "prediction_time")
+    private LocalDateTime predictionTime;
+    
+    // JPA automatically handles JDBC operations:
+    // INSERT INTO flight_predictions (airport, risk_level, risk_score, prediction_time) VALUES (?, ?, ?, ?)
+}
+```
+
+#### **3. Repository Pattern Implementation**
+```java
+// Location: src/main/java/com/example/flightrisk/repository/
+// How JDBC Works: Spring Data JPA translates method names to SQL queries
+
+@Repository
+public interface AirportRepository extends JpaRepository<Airport, Long> {
+    
+    // Method name -> JDBC SQL translation
+    Optional<Airport> findByCode(String code);
+    // Generates: SELECT * FROM airports WHERE code = ?
+    
+    List<Airport> findByCountry(String country);
+    // Generates: SELECT * FROM airports WHERE country = ?
+    
+    @Query("SELECT a FROM Airport a WHERE a.city = :city")
+    List<Airport> findByCity(@Param("city") String city);
+    // Custom JPQL -> JDBC SQL: SELECT * FROM airports WHERE city = ?
+}
+
+@Repository
+public interface FlightPredictionRepository extends JpaRepository<FlightPrediction, Long> {
+    
+    List<FlightPrediction> findByAirport(String airportCode);
+    // JDBC SQL: SELECT * FROM flight_predictions WHERE airport = ?
+    
+    @Query("SELECT fp FROM FlightPrediction fp WHERE fp.riskScore >= :threshold ORDER BY fp.predictionTime DESC")
+    List<FlightPrediction> findHighRiskPredictions(@Param("threshold") double threshold);
+    // JDBC SQL: SELECT * FROM flight_predictions WHERE risk_score >= ? ORDER BY prediction_time DESC
+    
+    @Modifying
+    @Query("DELETE FROM FlightPrediction fp WHERE fp.predictionTime < :cutoffTime")
+    int deleteOldPredictions(@Param("cutoffTime") LocalDateTime cutoffTime);
+    // JDBC SQL: DELETE FROM flight_predictions WHERE prediction_time < ?
+}
+```
+
+#### **4. Transaction Management**
+```java
+// Location: Service layer methods
+// Why Important: Ensures data consistency in safety-critical operations
+
+@Service
+@Transactional // JDBC transaction management
+public class PredictionService {
+    
+    @Autowired
+    private FlightPredictionRepository predictionRepository;
+    
+    @Transactional(rollbackFor = Exception.class)
+    public FlightPrediction savePrediction(String airport, String riskLevel, double riskScore) {
+        try {
+            // JDBC operations within transaction boundary
+            FlightPrediction prediction = new FlightPrediction();
+            prediction.setAirport(airport);
+            prediction.setRiskLevel(riskLevel);
+            prediction.setRiskScore(riskScore);
+            prediction.setPredictionTime(LocalDateTime.now());
+            
+            // JDBC: BEGIN TRANSACTION
+            FlightPrediction saved = predictionRepository.save(prediction);
+            // JDBC: INSERT INTO flight_predictions...
+            
+            // Additional operations can be added here
+            updateStatistics(airport, riskLevel);
+            // JDBC: UPDATE statistics...
+            
+            // JDBC: COMMIT TRANSACTION
+            return saved;
+            
+        } catch (Exception e) {
+            // JDBC: ROLLBACK TRANSACTION
+            logger.error("Failed to save prediction: {}", e.getMessage());
+            throw new RuntimeException("Prediction save failed", e);
+        }
+    }
+}
+```
+
+### **JDBC Performance Optimizations**
+
+#### **1. Connection Pooling**
+```java
+// HikariCP Configuration (Fastest JDBC Connection Pool)
+spring.datasource.hikari.maximum-pool-size=20        // Max connections
+spring.datasource.hikari.minimum-idle=5              // Min idle connections
+spring.datasource.hikari.idle-timeout=300000         // 5 minutes idle timeout
+spring.datasource.hikari.connection-timeout=20000    // 20 seconds connection timeout
+spring.datasource.hikari.leak-detection-threshold=60000 // 1 minute leak detection
+```
+
+#### **2. Prepared Statement Caching**
+```java
+// Hibernate automatically uses JDBC PreparedStatements for performance
+// Example: Repeated airport lookups use cached prepared statements
+
+// First call: Prepares statement
+Optional<Airport> airport1 = airportRepository.findByCode("DEL");
+// JDBC: PREPARE SELECT * FROM airports WHERE code = ?
+
+// Subsequent calls: Reuses prepared statement
+Optional<Airport> airport2 = airportRepository.findByCode("BOM");
+// JDBC: Reuses prepared statement, only changes parameter
+```
+
+#### **3. Batch Operations**
+```java
+@Service
+public class BulkDataService {
+    
+    @Transactional
+    public void saveBulkPredictions(List<FlightPrediction> predictions) {
+        // JDBC batch operations for better performance
+        predictionRepository.saveAll(predictions);
+        // JDBC: Uses batch INSERT statements instead of individual INSERTs
+        // INSERT INTO flight_predictions (...) VALUES (?, ?, ?), (?, ?, ?), ...
+    }
+}
+```
+
+### **JDBC Security Features**
+
+#### **1. SQL Injection Prevention**
+```java
+// ✅ SAFE: Using JPA/JDBC parameterized queries
+@Query("SELECT fp FROM FlightPrediction fp WHERE fp.airport = :airport")
+List<FlightPrediction> findByAirportSafe(@Param("airport") String airport);
+// JDBC: SELECT * FROM flight_predictions WHERE airport = ? (parameter is escaped)
+
+// ❌ UNSAFE: String concatenation (NOT used in our system)
+// String sql = "SELECT * FROM flight_predictions WHERE airport = '" + airport + "'";
+```
+
+#### **2. Connection Security**
+```properties
+# Production JDBC Security Configuration
+spring.datasource.url=jdbc:postgresql://localhost:5432/flightrisk?ssl=true&sslmode=require
+spring.datasource.username=${DB_USERNAME}  # Environment variable
+spring.datasource.password=${DB_PASSWORD}  # Environment variable
+```
+
+### **JDBC Monitoring and Debugging**
+
+#### **1. SQL Logging**
+```properties
+# Enable JDBC SQL logging for debugging
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+logging.level.org.hibernate.SQL=DEBUG
+logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
+```
+
+#### **2. Connection Pool Monitoring**
+```java
+@Component
+public class DatabaseHealthIndicator {
+    
+    @Autowired
+    private DataSource dataSource;
+    
+    public void checkConnectionPoolHealth() {
+        if (dataSource instanceof HikariDataSource) {
+            HikariDataSource hikariDS = (HikariDataSource) dataSource;
+            HikariPoolMXBean poolBean = hikariDS.getHikariPoolMXBean();
+            
+            logger.info("JDBC Pool Stats - Active: {}, Idle: {}, Total: {}", 
+                poolBean.getActiveConnections(),
+                poolBean.getIdleConnections(),
+                poolBean.getTotalConnections());
+        }
+    }
+}
+```
+
+### **Why JDBC is Critical for Aviation Safety Systems**
+
+1. **ACID Compliance**: Ensures data consistency in safety-critical operations
+2. **Performance**: Optimized database access for real-time risk assessments
+3. **Reliability**: Mature, battle-tested technology for enterprise applications
+4. **Security**: Built-in protection against SQL injection and data breaches
+5. **Scalability**: Connection pooling and batch operations for high-load scenarios
+6. **Monitoring**: Comprehensive logging and metrics for system health
+
+This JDBC implementation provides the robust, secure, and performant data access layer essential for a mission-critical flight risk assessment system.
     
     /**
      * Load 94 international airports from CSV
