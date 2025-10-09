@@ -1,6 +1,6 @@
-# 🗄️ JDBC Implementation Guide for Flight Risk Assessment System
+# JDBC Implementation Guide for Flight Risk Assessment System
 
-## 📋 Table of Contents
+## Table of Contents
 1. [What is JDBC and Why We Use It](#what-is-jdbc-and-why-we-use-it)
 2. [JDBC Architecture in Our System](#jdbc-architecture-in-our-system)
 3. [How JDBC Works Step-by-Step](#how-jdbc-works-step-by-step)
@@ -10,7 +10,7 @@
 7. [Monitoring and Debugging](#monitoring-and-debugging)
 8. [Production Considerations](#production-considerations)
 
-## 🎯 What is JDBC and Why We Use It
+##  What is JDBC and Why We Use It
 
 ### **JDBC (Java Database Connectivity) Overview**
 
@@ -32,7 +32,7 @@ JDBC is Java's standard API for connecting to and interacting with databases. In
 | **Type Safety** | Compile-time error detection | Prevents runtime failures in production |
 | **Performance Optimization** | Sub-100ms response times | Real-time risk assessment capabilities |
 
-## 🏗️ JDBC Architecture in Our System
+## JDBC Architecture in Our System
 
 ### **Layered Architecture Diagram**
 
@@ -86,7 +86,7 @@ graph TB
 8. Response Path → Results flow back through all layers
 ```
 
-## 🔧 How JDBC Works Step-by-Step
+## How JDBC Works Step-by-Step
 
 ### **Step 1: Database Connection Setup**
 
