@@ -49,11 +49,62 @@ cd flight-risk
 ./run-react-app.sh
 ```
 
-**What happens automatically:**
+## 🚀 **run-react-app.sh Script Overview**
+
+The `run-react-app.sh` script is a powerful automation tool that handles the complete setup and launch of the Flight Risk Assessment System. Here's a detailed breakdown of what it does:
+
+### **🛠️ Core Functionality**
+1. **Environment Validation**
+   - Checks for required software (Java 11+, Node.js 18+)
+   - Verifies Maven and npm are installed
+   - Ensures all system dependencies are met
+
+2. **Backend Setup**
+   - Compiles the Spring Boot application using Maven
+   - Sets up the MySQL database schema
+   - Initializes the database with default airport data
+   - Configures the application properties for development
+
+3. **Frontend Setup**
+   - Installs all Node.js dependencies
+   - Applies necessary patches for compatibility
+   - Configures environment variables
+
+4. **Application Launch**
+   - Starts the Spring Boot backend on port 8080
+   - Launches the React development server on port 3000
+   - Automatically opens the application in your default browser
+
+5. **Health Monitoring**
+   - Verifies backend health status
+   - Monitors frontend compilation status
+   - Provides real-time feedback in the terminal
+
+### **⚙️ Technical Details**
+- **Backend Port**: 8080
+- **Frontend Port**: 3000
+- **Database**: MySQL (configured via application.properties)
+- **Environment**: Development mode with hot-reload enabled
+
+### **🔄 Usage**
+```bash
+# Make the script executable (first time only)
+chmod +x run-react-app.sh
+
+# Run the application
+./run-react-app.sh
+```
+
+### **🔍 Troubleshooting**
+- If you encounter permission issues, run: `chmod +x run-react-app.sh`
+- For port conflicts, check and close any processes using ports 3000 or 8080
+- Ensure MySQL is running if using a local database
+
+**What happens automatically when you run the script:**
 1. ✅ **Environment Check**: Validates Java 11+ and Node.js 18+
 2. 📦 **Dependency Installation**: Maven and npm packages
 3. 🔧 **Compatibility Fixes**: Node.js version compatibility patches
-4. 🗄️ **Database Initialization**: H2 in-memory database with 94 airports
+4. 🗄️ **Database Initialization**: MySQL database with 94 airports
 5. 🚀 **Backend Startup**: Spring Boot server on `http://localhost:8080`
 6. ⏳ **Health Verification**: Automated backend health checks
 7. 🎨 **Frontend Launch**: React development server on `http://localhost:3000`
