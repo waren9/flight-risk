@@ -1,0 +1,194 @@
+/* Modern JavaFX Styling for Flight Risk Assessment System */
+
+.root {
+    -fx-font-family: "Inter", "Segoe UI", "Arial", sans-serif;
+}
+
+/* Tab Pane Styling */
+.tab-pane {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-background-radius: 15px;
+    -fx-border-radius: 15px;
+}
+
+.tab-pane .tab-header-area {
+    -fx-background-color: rgba(255,255,255,0.05);
+    -fx-background-radius: 15px 15px 0 0;
+}
+
+.tab-pane .tab {
+    -fx-background-color: transparent;
+    -fx-background-radius: 10px;
+    -fx-padding: 12px 24px;
+    -fx-text-fill: white;
+    -fx-font-weight: normal;
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-font-weight: bold;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: rgba(255,255,255,0.1);
+}
+
+/* Button Styling */
+.button {
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 4, 0, 0, 2);
+}
+
+.button:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+.button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+/* Text Field Styling */
+.text-field, .combo-box {
+    -fx-background-color: rgba(255,255,255,0.9);
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 12px 15px;
+    -fx-font-size: 14px;
+}
+
+.text-field:focused, .combo-box:focused {
+    -fx-background-color: white;
+    -fx-effect: dropshadow(gaussian, rgba(102,126,234,0.5), 8, 0, 0, 0);
+}
+
+/* Table View Styling */
+.table-view {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+}
+
+.table-view .column-header {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.table-view .table-cell {
+    -fx-text-fill: white;
+    -fx-background-color: transparent;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: rgba(102,126,234,0.3);
+}
+
+.table-view .table-row-cell:hover {
+    -fx-background-color: rgba(255,255,255,0.1);
+}
+
+/* Text Area Styling */
+.text-area {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+    -fx-text-fill: white;
+}
+
+.text-area .content {
+    -fx-background-color: transparent;
+}
+
+.text-area .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+/* Check Box Styling */
+.check-box {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.check-box .box {
+    -fx-background-color: rgba(255,255,255,0.2);
+    -fx-background-radius: 3px;
+    -fx-border-color: rgba(255,255,255,0.5);
+    -fx-border-radius: 3px;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #4caf50;
+}
+
+/* Date Picker Styling */
+.date-picker {
+    -fx-background-color: rgba(255,255,255,0.9);
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+}
+
+.date-picker .arrow-button {
+    -fx-background-color: #667eea;
+    -fx-background-radius: 0 8px 8px 0;
+}
+
+/* Scroll Pane Styling */
+.scroll-pane {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.scroll-pane .viewport {
+    -fx-background-color: transparent;
+}
+
+.scroll-pane .corner {
+    -fx-background-color: transparent;
+}
+
+/* Custom Glass Effect */
+.glass-panel {
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-background-radius: 15px;
+    -fx-border-color: rgba(255,255,255,0.2);
+    -fx-border-radius: 15px;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 4);
+}
+
+/* Status indicators */
+.status-connected {
+    -fx-text-fill: #4caf50;
+    -fx-font-weight: bold;
+}
+
+.status-disconnected {
+    -fx-text-fill: #f44336;
+    -fx-font-weight: bold;
+}
+
+.status-loading {
+    -fx-text-fill: #ff9800;
+    -fx-font-weight: bold;
+}
+
+/* Risk level colors */
+.risk-high {
+    -fx-text-fill: #ff6b6b;
+    -fx-font-weight: bold;
+}
+
+.risk-medium {
+    -fx-text-fill: #ffa726;
+    -fx-font-weight: bold;
+}
+
+.risk-low {
+    -fx-text-fill: #4caf50;
+    -fx-font-weight: bold;
+}
